@@ -3,6 +3,9 @@
 *.ko
 *.obj
 *.elf
+*.cod
+*.lst
+*.asm
 
 # Libraries
 *.lib
