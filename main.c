@@ -2,21 +2,21 @@
 #include <pic16/pic18f452.h>
 #include <delay.h>
 
-#pragma config WDT=OFF,LVP=OFF
+#pragma config WDT=OFF,LVP=OFF,OSC=HS,OSCS=OFF,PWRT=OFF
 
 static volatile unsigned char ucConductors = 16;
 static volatile unsigned char ucMap[16];
 
-#define CLOCKFREQ    32768
+#define CLOCKFREQ    20000000
 
 // bit macros
 #define  testbit(var, bit)   ((var) & (1 <<(bit)))
 #define  setbit(var, bit)    ((var) |= (1 << (bit)))
 #define  clrbit(var, bit)    ((var) &= ~(1 << (bit)))
 
-static void delay_ms(unsigned short ms)
+static void delay_1s(void)
 {
-    delay10tcy(ms * CLOCKFREQ / 4 / 1000 / 10);
+    delay1mtcy(5);
 }
 
 static unsigned char testinput(unsigned char ucIndex)
@@ -91,34 +91,39 @@ static void test_cable()
 		setbit(ucMap[ii], jj);
 	    }
 	}
-	delay_ms(1000);
+	delay_1s();
 	clrbit(PORTC, ii);	// drop port
     }
 
     for (ii = 8; ii < 16; ++ii) {
 	setbit(LATD, ii - 8);	// raise port
-	delay_ms(2000);
 	ucMap[ii] = 0;
 	for (jj = 8; jj < 16; ++jj) {
 	    if (testinput(jj)) {
 		setbit(ucMap[ii], jj);
 	    }
 	}
-	delay_ms(1000);
+	delay_1s();
 	clrbit(PORTD, ii - 8);	// drop port
     }
 }
 
 void main(void)
 {
-    INTCON = 0;			// no interrupts
-    TRISA = 0xFF;		// input
-    TRISB = 0xFF;		// input
-    TRISC = 0x00;		// output
-    TRISD = 0x00;		// output
+    INTCON = 0;	// no interrupts
+    TRISA = 0b11111111; // input
+    TRISB = 0b11011111;
+    TRISC = 0b00000000; // output
+    TRISD = 0b00000000; // output
 
-    LATC = 0x00;
-    LATD = 0x00;
-    while (1)
-	test_cable();
+    LATC = 0xFF;
+    LATD = 0xFF;
+
+    for (;;) {
+        setbit(LATB, 5);
+        delay_1s();
+        clrbit(LATB, 5);
+        delay_1s();
+    }
+//	test_cable();
 }
